@@ -1,0 +1,139 @@
+<!doctype html>
+
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+
+		<title>Raid Status | Guild of Beers</title>
+		<meta name="description" content="Official website for the Guild of Beers">
+		<meta name="author" content="Fuwic">
+
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/css/bootstrap.min.css" integrity="sha384-Zug+QiDoJOrZ5t4lssLdxGhVrurbmBWopoEl+M6BdEfwnCJZtKxi1KgxUyJq13dy" crossorigin="anonymous">
+        <link href="https://fonts.googleapis.com/css?family=Josefin+Sans" rel="stylesheet">
+
+		<!--[if lt IE 9]>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js"></script>
+		<![endif]-->
+
+        <style>
+            :root {
+                --special-font:  'Josefin Sans', sans-serif;
+            }
+
+            h1 { margin-top: 1rem; }
+
+            h1,
+            h2 {
+                font-family: var(--special-font);
+            }
+
+            section { padding: 1rem 0; }
+
+			.form-label {
+				display: block;
+			}
+
+			form ul {
+				list-style: none;
+			}
+        </style>
+	</head>
+
+	<body>
+
+        <div class="container">
+           <div id="google_translate_element"></div><script type="text/javascript">
+           function googleTranslateElementInit() {
+                 new google.translate.TranslateElement({pageLanguage: 'en', autoDisplay: false}, 'google_translate_element');
+           }
+           </script><script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+               
+        
+            <h1>Raid Status</h1>
+
+			<h2>Generate URL</h2>
+
+			<form>
+				<div class="form-group">
+					<label class="form-label">
+						Raid Start  <small class="text-muted">(local time)</small>
+						<input class="form-control timestamp" type="text" autofocus>
+						<input class="form-control-plaintext timestamp--utc" readonly required>
+					</label>
+
+				<div class="form-group">
+					Raid Type:
+					<ul>
+						<li>
+							<label class="form-label">
+								<input name="type" type="radio" value="naat" required>
+								NAAT
+							</label>
+						</li>
+						<li>
+							<label class="form-label">
+								<input name="type" type="radio" value="rancor" required>
+								Rancor
+							</label>
+						</li>
+					</ul>
+
+					<button class="btn btn-primary" type="submit">Generate URL</button>
+				</div>
+
+				<div class="url"></div>
+			</form>
+
+
+        </div>
+
+        <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/js/bootstrap.min.js" integrity="sha384-a5N7Y/aK3qNeh15eJKGWxsqtnX/wWdSZSKp+81YjTmS15nvnvxKHuzaWwXHDli+4" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.20.1/moment-with-locales.js"></script>
+
+        <script>
+			var params = {}, queries, temp, i, l;
+
+			queries = location.search.substr(1).split("&");
+
+			for ( i = 0, l = queries.length; i < l; i++ ) {
+				temp = queries[i].split('=');
+				params[temp[0]] = temp[1];
+			}
+
+			console.log( params );
+
+			$('.timestamp').val( moment().format() );
+			$('.timestamp--utc').val( moment().utc().format() );
+
+			$('.timestamp').on('input', function() {
+				var date = $(this).val();
+
+				if (moment( date, moment.ISO_8601).isValid()) { 
+					$('.timestamp--utc').val( moment(date).utc().format() );
+				}
+			});
+
+			$('form').on('submit', function(e) {
+				e.preventDefault();
+
+				$('.url').html(
+					$('<a>', {href: 'https://guild-of-beers.github.oi/raid.html?start=' + $('.timestamp--utc').val() + '&type=' + $('[name=type]:checked').val() } )
+						.text( 'https://guild-of-beers.github.oi/raid.html?start=' + $('.timestamp--utc').val() + '&type=' + $('[name=type]:checked').val() ) );
+
+
+				
+			});
+				
+
+			
+
+        </script>
+
+	</body>
+
+</html>
