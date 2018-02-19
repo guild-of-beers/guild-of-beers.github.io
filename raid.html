@@ -30,8 +30,6 @@
                 font-family: var(--special-font);
             }
 
-            section { padding: 1rem 0; }
-
 			.form-label {
 				display: block;
 			}
@@ -51,42 +49,51 @@
            }
            </script><script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
                
-        
-            <h1>Raid Status</h1>
+            <div class="d-none url-gen">
+                <h1>Generate URL</h1>
 
-			<h2>Generate URL</h2>
+                <form>
+                    <div class="form-group">
+                        <label class="form-label">
+                            Raid Start  <small class="text-muted">(local time)</small>
+                            <input class="form-control timestamp" type="text" autofocus required>
+                        </label>
+                    </div>
 
-			<form>
-				<div class="form-group">
-					<label class="form-label">
-						Raid Start  <small class="text-muted">(local time)</small>
-						<input class="form-control timestamp" type="text" autofocus>
-						<input class="form-control-plaintext timestamp--utc" readonly required>
-					</label>
+                    <div class="form-group">
+                        Raid Type:
+                        <label class="form-label">
+                            <input name="type" type="radio" value="naat" required>
+                            NAAT
+                        </label>
+                        <label class="form-label">
+                            <input name="type" type="radio" value="hrancor" required>
+                            HRancor
+                        </label>
 
-				<div class="form-group">
-					Raid Type:
-					<ul>
-						<li>
-							<label class="form-label">
-								<input name="type" type="radio" value="naat" required>
-								NAAT
-							</label>
-						</li>
-						<li>
-							<label class="form-label">
-								<input name="type" type="radio" value="rancor" required>
-								Rancor
-							</label>
-						</li>
-					</ul>
+                        <button class="btn btn-primary" type="submit">Generate URL</button>
+                    </div>
 
-					<button class="btn btn-primary" type="submit">Generate URL</button>
-				</div>
+                    <div class="url"></div>
+                </form>
+            </div>
 
-				<div class="url"></div>
-			</form>
+            <div class="d-none raid-status">
+                <h1>Raid Status</h1>
 
+                <dl>
+                    <dt>Type:</dt>
+                    <dd class="raid-status__type"></dd>
+                    <dt>Start (local time):</dt>
+                    <dd class="raid-status__start--local"></dd>
+                    <dt>Current Status:</dt>
+                    <dd class="raid-status__status"></dd>
+                    <dt class="d-none raid-status__countdown-label">Countdown Until Next Phase</dt>
+                    <dd class="d-none raid-status__countdown"></dd>
+                </dl>
+            </div>
+
+            <div class="d-none error"></div>
 
         </div>
 
@@ -96,41 +103,101 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.20.1/moment-with-locales.js"></script>
 
         <script>
-			var params = {}, queries, temp, i, l;
 
-			queries = location.search.substr(1).split("&");
+            function getURLParams() {
+                var params = {}, queries, temp, i, l;
 
-			for ( i = 0, l = queries.length; i < l; i++ ) {
-				temp = queries[i].split('=');
-				params[temp[0]] = temp[1];
-			}
+                queries = location.search.substr(1).split("&");
 
-			console.log( params );
+                for ( i = 0, l = queries.length; i < l; i++ ) {
+                    temp = queries[i].split('=');
+                    params[temp[0]] = temp[1];
+                }
 
-			$('.timestamp').val( moment().format() );
-			$('.timestamp--utc').val( moment().utc().format() );
+                console.log( params );
+                return params;
+            }
 
-			$('.timestamp').on('input', function() {
-				var date = $(this).val();
+            function displayError(msg) {
+                $('.error')
+                    .removeClass('d-none')
+                    .empty()
+                    .append(
+                        $('<h1>').text('Error!'),
+                        $('<p>').text(msg) );
+            }
 
-				if (moment( date, moment.ISO_8601).isValid()) { 
-					$('.timestamp--utc').val( moment(date).utc().format() );
-				}
-			});
+            function displayStatus(params) {
+                var container = $('.raid-status');
+                var locale = window.navigator.userLanguage || window.navigator.language;
+                
+                container.find('.raid-status__type').text( params.type );
+                container.find('.raid-status__start--local').text( moment.utc(params.start).locale(locale).local().format('ll LTS') );
+                container.find('.raid-status__status').text( params.status );
 
-			$('form').on('submit', function(e) {
-				e.preventDefault();
+                if (params.countdown) {
+                    $('.raid-status__countdown-label, .raid-status__countdown').removeClass('d-none');
 
-				$('.url').html(
-					$('<a>', {href: 'https://guild-of-beers.github.oi/raid.html?start=' + $('.timestamp--utc').val() + '&type=' + $('[name=type]:checked').val() } )
-						.text( 'https://guild-of-beers.github.oi/raid.html?start=' + $('.timestamp--utc').val() + '&type=' + $('[name=type]:checked').val() ) );
+                    setInterval( function() {
+                        var left = moment.duration( moment(params.countdown) - moment() );
 
+                        if (left.milliseconds() >= 0) {
+                            container.find('.raid-status__countdown').text( left.hours() + ":" + left.minutes() + ":" + left.seconds() );
+                        } 
+                    }, 1000);
+                }
+            }
 
-				
-			});
-				
+            function dateIsValid(date) {
+                return moment( date, moment.ISO_8601).isValid();
+            }
 
-			
+            function typeIsValid(type) {
+                return $.inArray( type, ['hrancor', 'naat'] ) >= 0;
+            }
+
+            var params = getURLParams();
+
+            if (!params.start && !params.type) {
+                $('.url-gen').removeClass('d-none');
+
+                $('.timestamp').val( moment().format() );
+
+                $('form').on('submit', function(e) {
+                    e.preventDefault();
+                    var url = 'https://guild-of-beers.github.oi/raid.html?start='
+                        + moment( $('.timestamp').val() ).utc().format()
+                        + '&type='
+                        + $('[name=type]:checked').val();
+
+                    $('.url').html(
+                        $('<a>', {href: url } )
+                            .text( url ) );
+                    
+                });
+            } else if (dateIsValid(params.start) && typeIsValid(params.type)) {
+                var plus24hr = moment.utc( params.start ).add(1, 'day');
+
+                $('.raid-status').removeClass('d-none');
+
+                if (params.type === 'naat') {
+                    if (moment.utc().isBefore( plus24hr )) {
+                        params.status = '1.5 million damage limit';
+                        params.countdown = plus24hr;
+                    } else {
+                        params.status = '5 million total damage limit';
+                    }
+                } else if (params.type === 'hrancor') {
+                    if (moment.utc().isBefore( plus24hr )) {
+                        params.status = 'Zero damage limit';
+                        params.countdown = plus24hr;
+                    } else {
+                        params.status = '1 million damage limit';
+                    }
+                }
+
+                displayStatus(params);
+            }
 
         </script>
 
